@@ -1,0 +1,75 @@
+Set-ExecutionPolicy RemoteSigned
+
+$BackupLocation = "/" #FTP destination
+$Now = Get-Date
+$Days="1"
+$Yesterday = $Now.AddDays(-$Days)
+
+$Now=Get-Date -UFormat "%Y%m"
+$Now
+$FolderName=$Now.ToString()
+
+$FTP_Folders=@("Folder1","Folder2","Folder3","Folder4","Folder5")
+
+
+# Load WinSCP .NET assembly
+Add-Type -Path "C:\Scripts\WinSCPnet.dll"
+
+# Set up session options
+$sessionOptions = New-Object WinSCP.SessionOptions -Property @{
+    Protocol = [WinSCP.Protocol]::Sftp
+    HostName = "FTP.site.com"
+    PortNumber = 10082
+    UserName = "FTP_Username"
+    Password = "FTP_Password"
+    SshHostKeyFingerprint = "ssh-rsa 2048 SSH_Key_HERE"
+}
+
+$session = New-Object WinSCP.Session
+
+try
+{
+    # Connect
+    $session.Open($sessionOptions)
+
+    
+    foreach ($FTP_Folders in $FTP_Folders)
+    {
+        
+        $TargetFolder = "C:\FTP_Path\"+$FTP_Folders+"\"+$FolderName 
+        
+        
+        If(!(test-path $TargetFolder))
+            {
+                continue
+            }
+        $BackupLocation ="/"+$FTP_Folders+"/"+$FolderName 
+        
+        If(!($session.FileExists($BackupLocation)))
+        {
+            $session.CreateDirectory($BackupLocation)
+        }
+
+
+    # Transfer files
+    # this will transfer last day files
+    # to transfer same month files commint the WHERE condition
+    $FilesToUpload = Get-Childitem $TargetFolder -Include $Extension -Recurse | where {$_.LastWriteTime.Date -eq $Yesterday.Date}
+    
+    foreach ($FilesToUpload in $FilesToUpload){
+    $a=$FilesToUpload
+    $t1 = $TargetFolder +"\" + $a
+    $t2 = $BackupLocation +"/"
+    $session.PutFiles($t1 , $t2).Check()
+    }
+    
+    
+    
+    }
+}
+finally
+{
+    $session.Dispose()
+}
+
+
