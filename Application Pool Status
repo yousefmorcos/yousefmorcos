@@ -1,0 +1,67 @@
+[System.Net.ServicePointManager]::SecurityProtocol = 'TLS12'
+
+$Username = "Your@email.com";
+$Password = "emailPassword";
+
+function Send-ToEmail([string]$email, [string]$Status){
+
+	$message = new-object Net.Mail.MailMessage;
+    $message.From = "Your@email.com";
+    $message.To.Add($email);
+    $message.Subject = "Subject line and Application Pool Name Here " + $Status
+    $message.Body = "Body, details and Application Pool Name Here " + $Status;
+    
+	$smtp = new-object Net.Mail.SmtpClient("smtp.office365.com", "587");
+	$smtp.EnableSSL = $true;
+	$smtp.Credentials = New-Object System.Net.NetworkCredential($Username, $Password);
+	$smtp.send($message);
+	}
+
+# Load IIS module:
+Import-Module WebAdministration
+ 
+# SET AppPool Name
+$AppPoolName = "application Pool name"
+ 
+#Testing if a String is NULL or EMPTY.
+if ([string]::IsNullOrWhiteSpace($AppPoolName))
+{
+    write-Output "$AppPoolName does not exist"
+}
+else 
+{
+try {
+#Determines whether all elements of a file or directory path exist.
+if (Test-Path IIS:\AppPools\$AppPoolName){
+
+# Start App Pool if stopped else restart
+#Get the runtime state of the DefaultAppPool and checking the status
+if ((Get-WebAppPoolState($AppPoolName)).Value -eq "Stopped"){
+
+$Status = (Get-WebAppPoolState($AppPoolName)).Value;
+Send-ToEmail  -email "it@chrc.net" $Status;
+
+Write-Output "Starting IIS app pool"
+#starting the App Pool
+Start-WebAppPool $AppPoolName;
+
+$Status = (Get-WebAppPoolState($AppPoolName)).Value;
+Send-ToEmail  -email "sendto@email.com" $Status;
+
+}
+else {
+$Status = (Get-WebAppPoolState($AppPoolName)).Value;
+
+Send-ToEmail  -email "sendto@email.com" $Status;
+
+Write-Output "Application pool is Running successfully"
+}
+}
+}
+catch {
+Write-Output $_.Exception.Message
+throw
+} 
+ 
+}
+
