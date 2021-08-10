@@ -1,0 +1,38 @@
+Start-Sleep -s 60
+
+$results = Get-ScheduledTask -TaskPath "\" | Where State -ne "Disabled" | Get-ScheduledTaskInfo | Where LastTaskResult -ne 0
+$taskname = $results.TaskName
+$ScheduledTasks =@("ScheduledTask_1","ScheduledTask_2","ScheduledTask_3")
+
+
+    if ($taskname -in $ScheduledTasks)
+    {
+        if ($results.LastTaskResult -ne 0) { 
+
+
+        [System.Net.ServicePointManager]::SecurityProtocol = 'TLS12'
+
+        $Username = "your@email.com";
+        $Password = "emailPassword";
+
+        function Send-ToEmail([string]$email, [string]$Lasttaskname){
+
+            $message = new-object Net.Mail.MailMessage;
+            $message.From = "your@email.com";
+            $message.To.Add($email);
+            $message.Subject = "Subject Line - Alert - " + $Lasttaskname 
+            $message.Body = $Lasttaskname + " task has Failed to Start/Execute in Task Scheduler";
+    
+            $smtp = new-object Net.Mail.SmtpClient("smtp.office365.com", "587");
+            $smtp.EnableSSL = $true;
+            $smtp.Credentials = New-Object System.Net.NetworkCredential($Username, $Password);
+            $smtp.send($message);
+    
+        }
+        Send-ToEmail  -email "sendemailto@email.com" -Lasttaskname $taskname;
+
+        } else { Write-Output "success" }
+    }
+
+
+       
