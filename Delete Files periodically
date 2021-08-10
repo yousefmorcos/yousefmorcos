@@ -1,0 +1,7 @@
+# Delete all Files in E:\Backups\SVN older than 7 day(s)
+$Path = "E:\Backups\SVN"
+$Daysback = "-7"
+ 
+$CurrentDate = Get-Date
+$DatetoDelete = $CurrentDate.AddDays($Daysback)
+Get-ChildItem $Path | Where-Object { $_.LastWriteTime -lt $DatetoDelete } | Remove-Item
