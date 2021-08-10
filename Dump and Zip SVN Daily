@@ -1,0 +1,19 @@
+$TodayDate = (Get-Date).ToString("yyyy-MM-dd")
+$7zipPath = "$env:ProgramFiles\7-Zip\7z.exe"
+
+if (-not (Test-Path -Path $7zipPath -PathType Leaf)) {
+    throw "7 zip file '$7zipPath' not found"
+}
+Set-Alias 7zip $7zipPath
+
+svnadmin dump C:\SVN\Repositories\ > E:\Backups\SVN\SVNBackup_$TodayDate.dump
+
+$Source = "E:\Backups\SVN\SVNBackup_"+$TodayDate+".dump"
+$Target = "E:\Backups\SVN\SVNBackup_"+$TodayDate+".zip"
+
+7zip a -mx=7 $Target $Source > E:\Backups\Logs\logs.txt 2>&1
+
+Remove-Item $Source
+
+$RemoteStorage = "\\Path\svn_backup"
+Copy-Item -Path $Target -Destination $RemoteStorage
