@@ -1,0 +1,37 @@
+[System.Net.ServicePointManager]::SecurityProtocol = 'TLS12'
+
+$LogsPath = "E:\path\"
+$Yesterday = (Get-Date).AddDays(-1)
+
+$Username = "sendingemail@email.com";
+$Password = "password";
+
+function Send-ToEmail([string]$email){
+
+       
+            $message = new-object Net.Mail.MailMessage;
+            $message.From = "sendingemail@email.com";
+            $message.To.Add($email);
+            $message.Subject = "Alert Subject - " + $Yesterday.Date +" log not found"
+            $message.Body = "Log File for Yesterday " + $Yesterday.Date +" was not found";
+    
+            $smtp = new-object Net.Mail.SmtpClient("smtp.office365.com", "587");
+            $smtp.EnableSSL = $true;
+            $smtp.Credentials = New-Object System.Net.NetworkCredential($Username, $Password);
+            $smtp.send($message);
+    
+        }
+
+$logfile = Get-ChildItem $LogsPath -Include $Extension -Recurse | where { $_.LastWriteTime.Date -eq $Yesterday.Date }
+
+foreach ($logfile in $logfile)
+{
+   if(!$logfile){
+   Send-ToEmail  -email "TOEmail@email.com";
+   }
+   
+   else{
+   Write-Output "found"
+      }
+   
+}
