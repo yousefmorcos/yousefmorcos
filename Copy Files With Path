@@ -1,0 +1,29 @@
+$source1 = "E:\SourceFolder"
+$destination = "E:\DestinationFolder\CopyFiles"
+$file_list = Get-Content "E:\DestinationFolder\CopyFiles\list.txt" 
+
+foreach ($file in $file_list)
+{
+$source = $source1 + "\$file"
+$testSource=Split-Path -Path $source -Parent 
+
+$newDest = $destination + "\$file"
+$destFolder = Split-Path -Path $newDest -Parent
+
+if (test-path $testSource)
+    {
+    If(!(test-path $newDest))
+        {
+      
+       New-Item -ItemType Directory -Force -Path $destFolder
+       Copy-Item $source $destFolder
+        }
+
+    Else
+        {
+        Copy-Item $source $destFolder
+        }
+    }
+}
+
+
